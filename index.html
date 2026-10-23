@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tracker Progetti & Storico Tempi</title>
+    <!-- Tailwind CSS per UI reattiva e moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome per Icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        /* Custom scrollbar for tables and card lists */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans text-slate-800 antialiased">
+
+    <!-- Header Principale -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-xl text-white">
+                    <i class="fa-solid fa-stopwatch text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Team Work Tracker</h1>
+                    <p class="text-xs text-slate-400" id="user-display">Dispositivo non registrato</p>
+                </div>
+            </div>
+            <!-- Bottone profilo / login -->
+            <button onclick="changeUserName()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-user-pen"></i>
+                <span id="btn-user-label">Cambia Nome</span>
+            </button>
+        </div>
+
+        <!-- Navigazione a Tab -->
+        <div class="max-w-5xl mx-auto px-2 flex border-t border-slate-800">
+            <button id="tab-btn-live" onclick="switchTab('live')" class="flex-1 py-3 text-center font-medium text-sm flex items-center justify-center space-x-2 border-b-2 border-blue-500 text-blue-400">
+                <i class="fa-solid fa-users"></i>
+                <span>Live Monitor</span>
+            </button>
+            <button id="tab-btn-history" onclick="switchTab('history')" class="flex-1 py-3 text-center font-medium text-sm flex items-center justify-center space-x-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Storico</span>
+            </button>
+            <button id="tab-btn-stats" onclick="switchTab('stats')" class="flex-1 py-3 text-center font-medium text-sm flex items-center justify-center space-x-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Riepilogo Tempi</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenuto Principale con Tab -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 overflow-y-auto">
+
+        <!-- ==================== TAB 1: LIVE MONITOR ==================== -->
+        <div id="tab-live" class="space-y-6">
+
+            <!-- Card Il Tuo Stato Attuale -->
+            <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-dot text-emerald-500 animate-pulse"></i>
+                        <span>Il Tuo Stato Attuale</span>
+                    </h2>
+                    <span id="my-timer" class="text-xl font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">
+                        00:00:00
+                    </span>
+                </div>
+
+                <!-- Pulsanti selezione attività -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button id="btn-proj-a" onclick="setWorkStatus('Progetto A')" class="p-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition shadow flex flex-col items-center justify-center space-y-1">
+                        <i class="fa-solid fa-diagram-project text-xl"></i>
+                        <span class="text-lg">Progetto A</span>
+                    </button>
+
+                    <button id="btn-proj-b" onclick="setWorkStatus('Progetto B')" class="p-4 rounded-xl font-bold text-white bg-amber-500 hover:bg-amber-600 active:scale-95 transition shadow flex flex-col items-center justify-center space-y-1">
+                        <i class="fa-solid fa-cubes text-xl"></i>
+                        <span class="text-lg">Progetto B</span>
+                    </button>
+
+                    <button id="btn-pause" onclick="setWorkStatus('Pausa')" class="p-4 rounded-xl font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 active:scale-95 transition shadow flex flex-col items-center justify-center space-y-1">
+                        <i class="fa-solid fa-mug-hot text-xl"></i>
+                        <span class="text-lg">Pausa / Stop</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Chi sta lavorando adesso -->
+            <section>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-users text-slate-600"></i>
+                        <span>Chi sta lavorando adesso</span>
+                    </h2>
+                    <span id="active-count" class="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full font-semibold">0 attivi</span>
+                </div>
+
+                <div id="team-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Cards del team caricate dinamicamente -->
+                    <div class="col-span-full py-10 text-center text-slate-400">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p class="text-sm">Caricamento stato del team...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== TAB 2: STORICO SESSIONI ==================== -->
+        <div id="tab-history" class="hidden space-y-4">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Storico Dettagliato Sessioni</h2>
+                    <p class="text-xs text-slate-500">Registro cronologico di ogni singola attivazione</p>
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <button onclick="exportHistoryCSV()" class="w-full sm:w-auto px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-csv text-sm"></i>
+                        <span>Esporta CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtri di ricerca -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input type="text" id="filter-user" oninput="renderHistoryTable()" placeholder="Filtra per Utente..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                <select id="filter-project" onchange="renderHistoryTable()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="ALL">Tutti i Progetti</option>
+                    <option value="Progetto A">Progetto A</option>
+                    <option value="Progetto B">Progetto B</option>
+                    <option value="Pausa">Pausa</option>
+                </select>
+            </div>
+
+            <!-- Tabella Storico -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+                                <th class="py-3 px-4">Utente</th>
+                                <th class="py-3 px-4">Progetto</th>
+                                <th class="py-3 px-4">Inizio</th>
+                                <th class="py-3 px-4">Fine</th>
+                                <th class="py-3 px-4 text-right">Durata</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-slate-400">
+                                    Nessuna sessione registrata.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 3: STATISTICHE & TEMPI TOTALI ==================== -->
+        <div id="tab-stats" class="hidden space-y-6">
+
+            <!-- Selettore Periodo Analisi -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Riepilogo Ore e Minuti</h2>
+                    <p class="text-xs text-slate-500">Calcolo automatico del tempo dedicato per progetto</p>
+                </div>
+                <div class="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+                    <button id="timeframe-today" onclick="setTimeframe('today')" class="flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-slate-800">
+                        Oggi
+                    </button>
+                    <button id="timeframe-week" onclick="setTimeframe('week')" class="flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800">
+                        Questa Settimana
+                    </button>
+                    <button id="timeframe-all" onclick="setTimeframe('all')" class="flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800">
+                        Sempre
+                    </button>
+                </div>
+            </div>
+
+            <!-- Totali Globali Team -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-blue-700 uppercase">Totale Progetto A</p>
+                        <p id="total-stat-proj-a" class="text-xl font-extrabold text-blue-900 mt-1">0h 0m</p>
+                    </div>
+                    <div class="bg-blue-600 text-white p-3 rounded-xl">
+                        <i class="fa-solid fa-diagram-project text-lg"></i>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-amber-700 uppercase">Totale Progetto B</p>
+                        <p id="total-stat-proj-b" class="text-xl font-extrabold text-amber-900 mt-1">0h 0m</p>
+                    </div>
+                    <div class="bg-amber-500 text-white p-3 rounded-xl">
+                        <i class="fa-solid fa-cubes text-lg"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-600 uppercase">Totale Pausa</p>
+                        <p id="total-stat-pause" class="text-xl font-extrabold text-slate-800 mt-1">0h 0m</p>
+                    </div>
+                    <div class="bg-slate-500 text-white p-3 rounded-xl">
+                        <i class="fa-solid fa-mug-hot text-lg"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabella Tempi per Singolo Utente -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Dettaglio per Utente</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-slate-600 font-semibold bg-slate-50/50">
+                                <th class="py-3 px-4">Utente</th>
+                                <th class="py-3 px-4 text-blue-700">Progetto A</th>
+                                <th class="py-3 px-4 text-amber-700">Progetto B</th>
+                                <th class="py-3 px-4 text-slate-500">Pausa</th>
+                                <th class="py-3 px-4 text-right font-bold">Totale Lavorato</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-stats-table-body" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-slate-400">
+                                    Nessuna attività registrata nel periodo selezionato.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal Cambio Nome Utente -->
+    <div id="name-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-sm w-full p-5 space-y-4">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">
+                    <i class="fa-solid fa-user-tag"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Chi sei?</h3>
+                <p class="text-xs text-slate-500">Inserisci il tuo nome per consentire al team di vedere le tue attività.</p>
+            </div>
+            <input type="text" id="name-input" placeholder="Es. Marco Rossi" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
+            <button onclick="saveUserName()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition text-sm shadow">
+                Salva e Continua
+            </button>
+        </div>
+    </div>
+
+    <!-- Modulo Firebase Client -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            collection, 
+            onSnapshot, 
+            addDoc 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configurazione Firebase integrata
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'work-tracker-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : { apiKey: "demo", authDomain: "demo.firebaseapp.com", projectId: "demo" };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Percorsi rigorosi Firestore
+        const PUBLIC_STATUS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'team_status');
+        const PUBLIC_SESSIONS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'work_sessions');
+
+        // Stato Locale
+        let currentUser = null;
+        let userName = localStorage.getItem('wt_user_name') || '';
+        let myCurrentStatus = 'Pausa';
+        let myCurrentStartTime = Date.now();
+        let teamData = [];
+        let sessionsData = [];
+        let liveTimerInterval = null;
+        let activeTimeframe = 'today'; // 'today', 'week', 'all'
+
+        // Inizializzazione Autenticazione
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Errore Autenticazione Firebase:", err);
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                if (!userName) {
+                    userName = 'Utente_' + user.uid.substring(0, 4);
+                    localStorage.setItem('wt_user_name', userName);
+                }
+                document.getElementById('user-display').textContent = userName;
+
+                // Avvia gli ascoltatori in tempo reale
+                listenToTeamStatus();
+                listenToSessionsHistory();
+            }
+        });
+
+        // 1. Ascolto Stato in Tempo Reale del Team
+        function listenToTeamStatus() {
+            if (!currentUser) return;
+
+            onSnapshot(PUBLIC_STATUS_COLL, (snapshot) => {
+                teamData = [];
+                snapshot.forEach((doc) => {
+                    teamData.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Se esiste già lo stato dell'utente corrente, sincronizziamo lo stato locale
+                const myData = teamData.find(u => u.id === currentUser.uid);
+                if (myData) {
+                    myCurrentStatus = myData.status || 'Pausa';
+                    myCurrentStartTime = myData.startTime || Date.now();
+                } else {
+                    // Crea primo stato di default
+                    updateMyStatusInFirestore('Pausa', Date.now());
+                }
+
+                renderLiveMonitor();
+                updateActiveButtonHighlight();
+            }, (error) => {
+                console.error("Errore ascolto team status:", error);
+            });
+        }
+
+        // 2. Ascolto Storico Sessioni
+        function listenToSessionsHistory() {
+            if (!currentUser) return;
+
+            onSnapshot(PUBLIC_SESSIONS_COLL, (snapshot) => {
+                sessionsData = [];
+                snapshot.forEach((doc) => {
+                    sessionsData.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Ordina cronologicamente (più recenti prima) in memoria
+                sessionsData.sort((a, b) => b.endTime - a.endTime);
+
+                renderHistoryTable();
+                renderStatsAndTotals();
+            }, (error) => {
+                console.error("Errore ascolto storico:", error);
+            });
+        }
+
+        // Cambio Stato Lavorativo con Salvataggio Sessione
+        window.setWorkStatus = async function(newStatus) {
+            if (!currentUser) return;
+
+            const now = Date.now();
+
+            // Se stiamo già facendo questa attività, non fare nulla
+            if (myCurrentStatus === newStatus) return;
+
+            // Se c'era una sessione precedente valida, registrala nello storico
+            if (myCurrentStatus && myCurrentStartTime) {
+                const durationSeconds = Math.floor((now - myCurrentStartTime) / 1000);
+                
+                // Registra solo se la sessione dura più di 2 secondi
+                if (durationSeconds >= 2) {
+                    try {
+                        await addDoc(PUBLIC_SESSIONS_COLL, {
+                            userId: currentUser.uid,
+                            userName: userName,
+                            project: myCurrentStatus,
+                            startTime: myCurrentStartTime,
+                            endTime: now,
+                            durationSeconds: durationSeconds,
+                            createdAt: now
+                        });
+                    } catch (e) {
+                        console.error("Errore salvataggio sessione:", e);
+                    }
+                }
+            }
+
+            // Aggiorna stato corrente in Firestore
+            myCurrentStatus = newStatus;
+            myCurrentStartTime = now;
+            await updateMyStatusInFirestore(newStatus, now);
+        };
+
+        async function updateMyStatusInFirestore(status, startTime) {
+            if (!currentUser) return;
+            const userDocRef = doc(PUBLIC_STATUS_COLL, currentUser.uid);
+            await setDoc(userDocRef, {
+                userId: currentUser.uid,
+                userName: userName,
+                status: status,
+                startTime: startTime,
+                lastUpdated: Date.now()
+            }, { merge: true });
+        }
+
+        // Rendering del Monitor Live
+        function renderLiveMonitor() {
+            const container = document.getElementById('team-cards-container');
+            if (!container) return;
+
+            if (teamData.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400">Nessun utente collegato.</div>`;
+                document.getElementById('active-count').textContent = '0 attivi';
+                return;
+            }
+
+            let activeCount = 0;
+            container.innerHTML = '';
+
+            teamData.forEach(member => {
+                const isMe = member.id === currentUser?.uid;
+                const isWorking = member.status !== 'Pausa';
+                if (isWorking) activeCount++;
+
+                let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+                let icon = 'fa-mug-hot';
+                if (member.status === 'Progetto A') {
+                    badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    icon = 'fa-diagram-project';
+                } else if (member.status === 'Progetto B') {
+                    badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                    icon = 'fa-cubes';
+                }
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl p-4 shadow-sm border ${isMe ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'} flex items-center justify-between`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm">
+                            ${(member.userName || 'U').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-sm text-slate-900">${escapeHtml(member.userName || 'Utente')}</span>
+                                ${isMe ? '<span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.5 rounded">TU</span>' : ''}
+                            </div>
+                            <span class="inline-flex items-center space-x-1 border px-2 py-0.5 rounded-full text-xs font-semibold mt-1 ${badgeColor}">
+                                <i class="fa-solid ${icon} text-[10px]"></i>
+                                <span>${member.status || 'Pausa'}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400">In corso da</p>
+                        <span class="font-mono text-sm font-bold text-slate-700 live-timer" data-starttime="${member.startTime}">
+                            ${formatElapsed(Date.now() - (member.startTime || Date.now()))}
+                        </span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('active-count').textContent = `${activeCount} al lavoro`;
+        }
+
+        // Timer di aggiornamento locale per la UI (ogni secondo)
+        if (!liveTimerInterval) {
+            liveTimerInterval = setInterval(() => {
+                // Aggiorna il timer personale
+                if (myCurrentStartTime) {
+                    const elapsed = Math.max(0, Date.now() - myCurrentStartTime);
+                    document.getElementById('my-timer').textContent = formatElapsed(elapsed);
+                }
+
+                // Aggiorna tutti i timer live nella lista del team
+                document.querySelectorAll('.live-timer').forEach(el => {
+                    const st = parseInt(el.getAttribute('data-starttime'));
+                    if (st) {
+                        el.textContent = formatElapsed(Math.max(0, Date.now() - st));
+                    }
+                });
+            }, 1000);
+        }
+
+        function updateActiveButtonHighlight() {
+            const btnA = document.getElementById('btn-proj-a');
+            const btnB = document.getElementById('btn-proj-b');
+            const btnP = document.getElementById('btn-pause');
+
+            [btnA, btnB, btnP].forEach(btn => {
+                if (btn) btn.classList.remove('ring-4', 'ring-offset-2', 'ring-slate-800');
+            });
+
+            if (myCurrentStatus === 'Progetto A' && btnA) btnA.classList.add('ring-4', 'ring-offset-2', 'ring-slate-800');
+            if (myCurrentStatus === 'Progetto B' && btnB) btnB.classList.add('ring-4', 'ring-offset-2', 'ring-slate-800');
+            if (myCurrentStatus === 'Pausa' && btnP) btnP.classList.add('ring-4', 'ring-offset-2', 'ring-slate-800');
+        }
+
+        // Render Tabella Storico Sessioni
+        window.renderHistoryTable = function() {
+            const tbody = document.getElementById('history-table-body');
+            if (!tbody) return;
+
+            const filterUser = (document.getElementById('filter-user')?.value || '').toLowerCase();
+            const filterProj = document.getElementById('filter-project')?.value || 'ALL';
+
+            const filtered = sessionsData.filter(s => {
+                const matchUser = !filterUser || (s.userName && s.userName.toLowerCase().includes(filterUser));
+                const matchProj = filterProj === 'ALL' || s.project === filterProj;
+                return matchUser && matchProj;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400">
+                            Nessuna sessione trovata con i filtri selezionati.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(s => {
+                const startStr = new Date(s.startTime).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                const endStr = new Date(s.endTime).toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                const durationStr = formatDurationSeconds(s.durationSeconds || 0);
+
+                let badgeClass = 'bg-slate-100 text-slate-600';
+                if (s.project === 'Progetto A') badgeClass = 'bg-blue-100 text-blue-800 font-bold';
+                if (s.project === 'Progetto B') badgeClass = 'bg-amber-100 text-amber-800 font-bold';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(s.userName || 'Utente')}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 rounded-full text-xs ${badgeClass}">
+                                ${s.project}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-500">${startStr}</td>
+                        <td class="py-3 px-4 text-slate-500">${endStr}</td>
+                        <td class="py-3 px-4 text-right font-mono font-bold text-slate-700">${durationStr}</td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        // Calcolo e Render Tabella Statistiche / Totali
+        window.renderStatsAndTotals = function() {
+            const now = new Date();
+            let startFilterTime = 0;
+
+            if (activeTimeframe === 'today') {
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                startFilterTime = startOfDay.getTime();
+            } else if (activeTimeframe === 'week') {
+                const dayOfWeek = now.getDay() || 7; // Lunedì = 1
+                const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1);
+                startFilterTime = startOfWeek.getTime();
+            } else {
+                startFilterTime = 0; // All time
+            }
+
+            // Filtra sessioni per intervallo di tempo scelto
+            const timeFiltered = sessionsData.filter(s => s.endTime >= startFilterTime);
+
+            let projASec = 0;
+            let projBSec = 0;
+            let pauseSec = 0;
+
+            // Raggruppamento per utente
+            const userStats = {};
+
+            timeFiltered.forEach(s => {
+                const dur = s.durationSeconds || 0;
+                if (s.project === 'Progetto A') projASec += dur;
+                else if (s.project === 'Progetto B') projBSec += dur;
+                else if (s.project === 'Pausa') pauseSec += dur;
+
+                const uName = s.userName || 'Sconosciuto';
+                if (!userStats[uName]) {
+                    userStats[uName] = { projA: 0, projB: 0, pause: 0, totalWork: 0 };
+                }
+
+                if (s.project === 'Progetto A') {
+                    userStats[uName].projA += dur;
+                    userStats[uName].totalWork += dur;
+                } else if (s.project === 'Progetto B') {
+                    userStats[uName].projB += dur;
+                    userStats[uName].totalWork += dur;
+                } else if (s.project === 'Pausa') {
+                    userStats[uName].pause += dur;
+                }
+            });
+
+            // Aggiorna Card Superiori Totali
+            document.getElementById('total-stat-proj-a').textContent = formatHoursMinutes(projASec);
+            document.getElementById('total-stat-proj-b').textContent = formatHoursMinutes(projBSec);
+            document.getElementById('total-stat-pause').textContent = formatHoursMinutes(pauseSec);
+
+            // Aggiorna Tabella Utenti
+            const tbody = document.getElementById('user-stats-table-body');
+            if (!tbody) return;
+
+            const userKeys = Object.keys(userStats);
+            if (userKeys.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400">
+                            Nessuna attività registrata nel periodo selezionato.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = userKeys.map(u => {
+                const stats = userStats[u];
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-bold text-slate-800">${escapeHtml(u)}</td>
+                        <td class="py-3 px-4 font-mono text-blue-700 font-semibold">${formatHoursMinutes(stats.projA)}</td>
+                        <td class="py-3 px-4 font-mono text-amber-700 font-semibold">${formatHoursMinutes(stats.projB)}</td>
+                        <td class="py-3 px-4 font-mono text-slate-500">${formatHoursMinutes(stats.pause)}</td>
+                        <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">${formatHoursMinutes(stats.totalWork)}</td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        // Cambio Periodo Analisi (Oggi / Settimana / Sempre)
+        window.setTimeframe = function(timeframe) {
+            activeTimeframe = timeframe;
+            ['today', 'week', 'all'].forEach(t => {
+                const btn = document.getElementById(`timeframe-${t}`);
+                if (t === timeframe) {
+                    btn.className = "flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-slate-800";
+                } else {
+                    btn.className = "flex-1 sm:flex-initial px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800";
+                }
+            });
+            renderStatsAndTotals();
+        };
+
+        // Esportazione in formato CSV
+        window.exportHistoryCSV = function() {
+            if (sessionsData.length === 0) {
+                alert("Nessun dato disponibile da esportare!");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,Utente,Progetto,Inizio,Fine,Durata_Secondi,Durata_Formattata\n";
+
+            sessionsData.forEach(s => {
+                const startStr = new Date(s.startTime).toISOString();
+                const endStr = new Date(s.endTime).toISOString();
+                const durStr = formatDurationSeconds(s.durationSeconds || 0);
+                csvContent += `"${s.userName || ''}","${s.project}","${startStr}","${endStr}",${s.durationSeconds || 0},"${durStr}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `storico_lavori_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // Gestione Cambio Nome Utente
+        window.changeUserName = function() {
+            document.getElementById('name-input').value = userName;
+            document.getElementById('name-modal').classList.remove('hidden');
+        };
+
+        window.saveUserName = async function() {
+            const input = document.getElementById('name-input').value.trim();
+            if (input) {
+                userName = input;
+                localStorage.setItem('wt_user_name', userName);
+                document.getElementById('user-display').textContent = userName;
+                document.getElementById('name-modal').classList.add('hidden');
+
+                // Aggiorna Firestore se autenticato
+                if (currentUser) {
+                    await updateMyStatusInFirestore(myCurrentStatus, myCurrentStartTime);
+                }
+            }
+        };
+
+        // Utility Formattazione Tempo
+        function formatElapsed(ms) {
+            const totalSec = Math.floor(ms / 1000);
+            const hrs = Math.floor(totalSec / 3600);
+            const mins = Math.floor((totalSec % 3600) / 60);
+            const secs = totalSec % 60;
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        }
+
+        function formatDurationSeconds(totalSec) {
+            const hrs = Math.floor(totalSec / 3600);
+            const mins = Math.floor((totalSec % 3600) / 60);
+            const secs = totalSec % 60;
+            if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`;
+            if (mins > 0) return `${mins}m ${secs}s`;
+            return `${secs}s`;
+        }
+
+        function formatHoursMinutes(totalSec) {
+            const hrs = Math.floor(totalSec / 3600);
+            const mins = Math.floor((totalSec % 3600) / 60);
+            return `${hrs}h ${mins}m`;
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        // Inizializza Auth al caricamento
+        initAuth();
+    </script>
+
+    <!-- Navigazione Tab e UI Helpers -->
+    <script>
+        function switchTab(tabName) {
+            ['live', 'history', 'stats'].forEach(t => {
+                const tabEl = document.getElementById(`tab-${t}`);
+                const btnEl = document.getElementById(`tab-btn-${t}`);
+
+                if (t === tabName) {
+                    tabEl.classList.remove('hidden');
+                    btnEl.className = "flex-1 py-3 text-center font-medium text-sm flex items-center justify-center space-x-2 border-b-2 border-blue-500 text-blue-400";
+                } else {
+                    tabEl.classList.add('hidden');
+                    btnEl.className = "flex-1 py-3 text-center font-medium text-sm flex items-center justify-center space-x-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200";
+                }
+            });
+
+            // Trigger re-render per tabelle quando si apre la tab relativa
+            if (tabName === 'history' && window.renderHistoryTable) window.renderHistoryTable();
+            if (tabName === 'stats' && window.renderStatsAndTotals) window.renderStatsAndTotals();
+        }
+    </script>
+</body>
+</html>
